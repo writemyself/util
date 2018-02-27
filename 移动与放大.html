@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>移动与放大</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        html,body{
+            height: 100%;
+            width: 100%;
+        }
+        .box{
+            height: 100px;
+            width: 100px;
+            border: 1px solid red;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div class="box"></div>
+    <script>
+        var _box  = document.querySelector(".box");
+        //火狐下使用DOMMouseScroll，其他浏览器都是用mousewheel
+        if(_box.onmousewheel === null){
+            _box.onmousewheel = scrollFun;
+        }else{
+            // addEventListener false是在冒泡阶段执行，true是在捕获阶段执行
+            _box.addEventListener("DOMMouseScroll", scrollFun, false);
+        }
+
+        //放大处理
+        function scrollFun(e){
+            //事件的兼容性
+            e = e || window.event;
+            var _height = _box.offsetHeight,
+                _width = _box.offsetWidth,
+                // 火狐上使用detail取±3,其它浏览器使用wheelDelta取±120计算
+                _tag = e.wheelDelta ? e.wheelDelta : e.detail;
+                //判断状态设定宽高
+                _width = _tag > 0 ? parseInt(_width)*1.1 : parseInt(_width)*.9;
+                _height = _tag > 0 ? parseInt(_height)*1.1 : parseInt(_height)*.9;
+                // 样式
+                // _style = "width:"+ _width +"px;height:" + _height + "px;"
+                // _box.setAttribute('style', _style);
+                _box.style.width = _width + "px";
+                _box.style.height = _height + "px";
+        }
+    </script>
+
+    <script>
+        //获取元素
+        var _box = document.querySelector(".box");
+        //获取元素的父元素
+        var _parentNode = _box.parentNode;
+        // 创建一个元素作为父元素
+        var _newDiv = document.createElement("div");
+        //定义创建元素样式
+        var _parentStyle = 'position:relative;height:100%;width:100%';
+        _newDiv.setAttribute("style", _parentStyle);
+        //将元素放进创建的父元素中
+        _newDiv.appendChild(_box);
+        //在父元素中放进创建的元素
+        _parentNode.appendChild(_newDiv);
+        
+        //当在当前元素按住的情况下获取创建元素的宽高
+        _box.onmousedown = function(e){
+            //阻止默认事件
+            e.preventDefault();
+
+            //获取元素点击的父元素并存储数据
+            var _curParent = _box.parentNode;
+            var _parentHeight = _curParent.clientHeight;
+            var _parentWidth = _curParent.clientWidth;
+            //当前元素数据
+            var _selfOffsetX = _box.offsetLeft;
+            var _selfOffsetY = _box.offsetTop;
+            var _selfWidth = _box.offsetWidth;
+            var _selfHeight = _box.offsetHeight;
+
+            //计算点击时鼠标在元素中的位置，重新计算坐标时有用
+            var _x = e.clientX - parseInt(_selfOffsetX);
+            var _y = e.clientY - parseInt(_selfOffsetY);
+            //元素拖拽后的计算结果
+            var _lastX = 0;
+            var _lastY = 0;
+
+            function move(e){
+                e.preventDefault();
+                //计算拖拽后元素的位置
+                //限制移动范围左右上下
+                _lastX = Math.max(0, Math.min(_parentWidth - _selfWidth, e.clientX - _x));
+                _lastY = Math.max(0, Math.min(_parentHeight - _selfHeight, e.clientY - _y));
+                //将计算好的数据放进样式
+                // var _selfStyle = "top:"+ _lastY +"px;left:" + _lastX + "px;";
+                // _box.setAttribute("style", _selfStyle);
+                _box.style.top = _lastY + "px";
+                _box.style.left = _lastX + "px";
+            }
+            
+            //元素移动
+            document.addEventListener("mousemove", move, false);
+            //当松开鼠标时移除事件
+            document.onmouseup = function(){
+                document.removeEventListener("mousemove", move, false);
+            };
+        }
+    </script>
+</body>
+</html>
